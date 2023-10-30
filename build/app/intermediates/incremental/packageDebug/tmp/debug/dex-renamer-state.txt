@@ -1,0 +1,4 @@
+#Sun Oct 29 23:38:52 CET 2023
+base.0=F\:\\i veri file\\flutterAPP\\campo_minato\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\classes.dex
+path.0=classes.dex
+renamed.0=classes.dex
