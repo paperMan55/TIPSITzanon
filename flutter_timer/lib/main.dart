@@ -99,9 +99,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
         title: Text(widget.title),
       ),
-      body: Center(
+      body: 
 
-        child: Column(
+        Column(
 
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -122,7 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
           ],
         ),
-      ),
+      
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,
       floatingActionButton: Row(
                   mainAxisSize: MainAxisSize.min,
