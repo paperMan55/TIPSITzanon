@@ -53,7 +53,6 @@ class GameState extends State<Game>{
   }
 }
 
-
 class Grid extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
@@ -111,7 +110,23 @@ class GridState extends State<Grid>{
       ],
     ),
     barrierDismissible: false,
-    
+    );
+  }
+  void left(){
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: const Text("the other got scared and left."),
+      actions: [
+        TextButton(onPressed: exit, child: const Text("lol")),
+      ],
+    ),
+    barrierDismissible: false,
+    );
+  }
+  void yourTurn(){
+    showDialog(context: context, builder: (_) => const AlertDialog(
+      title:  Text("your turn!"),
+    ),
+    barrierDismissible: true,
     );
   }
   void exit(){
@@ -179,7 +194,6 @@ class _CascadeLayoutDelegate extends MultiChildLayoutDelegate {
   @override
   void performLayout(Size size) {
     double offset = 0;
-    
 
     for (var key in GridMap.grid.entries){
       layoutChild(key.key,const BoxConstraints());
@@ -187,7 +201,6 @@ class _CascadeLayoutDelegate extends MultiChildLayoutDelegate {
     }    
   }
 
-  
   @override
   bool shouldRelayout(_CascadeLayoutDelegate oldDelegate) {
     return this != oldDelegate;

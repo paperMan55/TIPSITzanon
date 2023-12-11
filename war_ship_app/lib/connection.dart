@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'main.dart';
 
 class Connection{
@@ -21,7 +20,6 @@ class Connection{
   void sendMsg(String msgO){
     s?.write("$msgO\n");
   }
-
 
   void stopConnection(){
     s?.close();
@@ -51,6 +49,7 @@ class Connection{
           sendMsg("RSP$value");
         }
         myTurn = true;
+        States.gridState!.yourTurn();
         break;
       case "RSP": //risposta positiva
         GridMap().setEnemyCell(value, true);
@@ -71,7 +70,7 @@ class Connection{
         States.gridState!.winDialog(true);
         print("vinto!");
       case "EXT":
-        States.gridState!.exit();
+        States.gridState!.left();
     }
     treatData(input.substring(f+1));
   }
