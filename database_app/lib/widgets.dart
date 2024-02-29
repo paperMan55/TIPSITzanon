@@ -70,11 +70,9 @@ class TodoItemState extends State<TodoItem>{
             color:  Color.fromARGB(255, 86, 174, 246),
       ),
           child: ListTile(
-          onTap: () {
-            onTodoChanged(todo);
-          },
           onLongPress: (() {
-            onTodoDelete(todo);
+            //onTodoDelete(todo);
+            _displayOptions();
           }),
           leading: CircleAvatar(child: Text(todo.name[0])),
           title: Text(todo.name, style: _getTextStyle(todo.checked)),
@@ -84,7 +82,7 @@ class TodoItemState extends State<TodoItem>{
           width: 250,
           height: clampDouble(realComments.length*20, 0, 100),
           child: ListView.builder(
-
+              
               padding: const EdgeInsets.symmetric(vertical: 0),
               itemCount: realComments.length,
               itemBuilder: (context, index) {
@@ -128,7 +126,35 @@ class TodoItemState extends State<TodoItem>{
       },
     );
   }
-    void _addTodoComment(String name) {
+  Future<void> _displayOptions() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: SizedBox(
+            height: 80,
+            child: Column(
+              
+              children: [
+                SizedBox(
+                  height: 40,
+                  width: 300,
+                  child: TextButton(onPressed: (){Navigator.of(context).pop();onTodoChanged(todo);}, child: const Text("modify")),
+                ),
+                SizedBox(
+                  height: 40,
+                  width: 300,
+                  child: TextButton(onPressed: (){Navigator.of(context).pop();onTodoDelete(todo);}, child: const Text("delete")),
+                ),
+              ],
+            ),
+          )
+        );
+      },
+    );
+  }
+  void _addTodoComment(String name) {
     print(todo.id);
     Comment com = Comment(id: null, name: "-> $name", postid: todo.id!);
     dao.insertComment(com).then((value){getComments(todo.id!);});

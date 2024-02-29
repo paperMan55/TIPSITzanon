@@ -1,3 +1,4 @@
+import 'package:floor/floor.dart';
 import 'package:flutter/material.dart';
 
 import 'dao.dart';
@@ -67,18 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _handleTodoChange(Todo todo) {
-    todo.checked = !todo.checked;
-    setState(() {
-      _todos.remove(todo);
-      if (!todo.checked) {
-        _todos.add(todo);
-      } else {
-        _todos.insert(0, todo);
-      }
-    });
-    _dao.updateTodo(todo);
+    _textFieldController.text = todo.name;
+    _displayChangeDialog(todo);
   }
+  void updateTodo(Todo todo, String text){
 
+  }
   void _handleTodoDelete(Todo todo) {
     _dao.deleteTodo(todo);
     deleteCommentsOfPost(todo.id!);
@@ -120,6 +115,46 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
                 Navigator.of(context).pop();
                 _addTodoItem(_textFieldController.text);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Future<void> _displayChangeDialog(Todo todo) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('modify Post'),
+          content: TextField(
+            controller: _textFieldController,
+            decoration: const InputDecoration(hintText: 'type here ...'),
+            onSubmitted: (value) {
+                if(value.isEmpty){
+                  return;
+                }
+                Todo tod = Todo(id: todo.id, name: value);
+                Navigator.of(context).pop();
+                _dao.updateTodo(tod);
+                _textFieldController.clear();
+                _updateTodos();
+              },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Modify'),
+              onPressed: () {
+                if(_textFieldController.text.isEmpty){
+                  return;
+                }
+                Todo tod = Todo(id: todo.id, name: _textFieldController.text);
+                Navigator.of(context).pop();
+                _dao.updateTodo(tod);
+                _textFieldController.clear();
+                _updateTodos();
               },
             ),
           ],

@@ -28,6 +28,7 @@ class Comment {
   @primaryKey
   final int? id;
 
+  @ForeignKey(childColumns: ["postid"], parentColumns: ["id"], entity: Post)
   final int postid;
 
   final String name;
