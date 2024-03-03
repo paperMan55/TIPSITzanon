@@ -85,8 +85,6 @@ class _$AppDatabase extends AppDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Todo` (`id` INTEGER, `name` TEXT NOT NULL, `checked` INTEGER NOT NULL, PRIMARY KEY (`id`))');
-        await database.execute(
             'CREATE TABLE IF NOT EXISTS `Comment` (`id` INTEGER, `postid` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY (`id`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Post` (`id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))');
@@ -108,14 +106,6 @@ class _$TodoDao extends TodoDao {
     this.database,
     this.changeListener,
   )   : _queryAdapter = QueryAdapter(database),
-        _todoInsertionAdapter = InsertionAdapter(
-            database,
-            'Todo',
-            (Todo item) => <String, Object?>{
-                  'id': item.id,
-                  'name': item.name,
-                  'checked': item.checked ? 1 : 0
-                }),
         _commentInsertionAdapter = InsertionAdapter(
             database,
             'Comment',
@@ -126,15 +116,6 @@ class _$TodoDao extends TodoDao {
                 }),
         _postInsertionAdapter = InsertionAdapter(database, 'Post',
             (Post item) => <String, Object?>{'id': item.id, 'name': item.name}),
-        _todoUpdateAdapter = UpdateAdapter(
-            database,
-            'Todo',
-            ['id'],
-            (Todo item) => <String, Object?>{
-                  'id': item.id,
-                  'name': item.name,
-                  'checked': item.checked ? 1 : 0
-                }),
         _commentUpdateAdapter = UpdateAdapter(
             database,
             'Comment',
@@ -146,15 +127,6 @@ class _$TodoDao extends TodoDao {
                 }),
         _postUpdateAdapter = UpdateAdapter(database, 'Post', ['id'],
             (Post item) => <String, Object?>{'id': item.id, 'name': item.name}),
-        _todoDeletionAdapter = DeletionAdapter(
-            database,
-            'Todo',
-            ['id'],
-            (Todo item) => <String, Object?>{
-                  'id': item.id,
-                  'name': item.name,
-                  'checked': item.checked ? 1 : 0
-                }),
         _commentDeletionAdapter = DeletionAdapter(
             database,
             'Comment',
@@ -173,42 +145,17 @@ class _$TodoDao extends TodoDao {
 
   final QueryAdapter _queryAdapter;
 
-  final InsertionAdapter<Todo> _todoInsertionAdapter;
-
   final InsertionAdapter<Comment> _commentInsertionAdapter;
 
   final InsertionAdapter<Post> _postInsertionAdapter;
-
-  final UpdateAdapter<Todo> _todoUpdateAdapter;
 
   final UpdateAdapter<Comment> _commentUpdateAdapter;
 
   final UpdateAdapter<Post> _postUpdateAdapter;
 
-  final DeletionAdapter<Todo> _todoDeletionAdapter;
-
   final DeletionAdapter<Comment> _commentDeletionAdapter;
 
   final DeletionAdapter<Post> _postDeletionAdapter;
-
-  @override
-  Future<List<Todo>> getTodos() async {
-    return _queryAdapter.queryList('SELECT * FROM Todo',
-        mapper: (Map<String, Object?> row) => Todo(
-            id: row['id'] as int?,
-            name: row['name'] as String,
-            checked: (row['checked'] as int) != 0));
-  }
-
-  @override
-  Future<Todo?> findTodoById(int id) async {
-    return _queryAdapter.query('SELECT * FROM Todo WHERE id = ?1',
-        mapper: (Map<String, Object?> row) => Todo(
-            id: row['id'] as int?,
-            name: row['name'] as String,
-            checked: (row['checked'] as int) != 0),
-        arguments: [id]);
-  }
 
   @override
   Future<List<Comment>> getComments() async {
@@ -255,16 +202,6 @@ class _$TodoDao extends TodoDao {
   }
 
   @override
-  Future<void> insertTodo(Todo item) async {
-    await _todoInsertionAdapter.insert(item, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> insertTodos(List<Todo> items) async {
-    await _todoInsertionAdapter.insertList(items, OnConflictStrategy.abort);
-  }
-
-  @override
   Future<void> insertComment(Comment item) async {
     await _commentInsertionAdapter.insert(item, OnConflictStrategy.abort);
   }
@@ -285,16 +222,6 @@ class _$TodoDao extends TodoDao {
   }
 
   @override
-  Future<void> updateTodo(Todo item) async {
-    await _todoUpdateAdapter.update(item, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> updateTodos(List<Todo> items) async {
-    await _todoUpdateAdapter.updateList(items, OnConflictStrategy.abort);
-  }
-
-  @override
   Future<void> updateComment(Comment item) async {
     await _commentUpdateAdapter.update(item, OnConflictStrategy.abort);
   }
@@ -312,16 +239,6 @@ class _$TodoDao extends TodoDao {
   @override
   Future<void> updatePosts(List<Post> items) async {
     await _postUpdateAdapter.updateList(items, OnConflictStrategy.abort);
-  }
-
-  @override
-  Future<void> deleteTodo(Todo items) async {
-    await _todoDeletionAdapter.delete(items);
-  }
-
-  @override
-  Future<void> deleteTodos(List<Todo> itemss) async {
-    await _todoDeletionAdapter.deleteList(itemss);
   }
 
   @override

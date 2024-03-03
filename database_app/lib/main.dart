@@ -43,7 +43,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _textFieldController = TextEditingController();
-  final List<Todo> _todos = <Todo>[];
+  final List<Post> _posts = <Post>[];
 
   @override
   initState() {
@@ -55,30 +55,27 @@ class _MyHomePageState extends State<MyHomePage> {
     AppDatabase database =
         await $FloorAppDatabase.databaseBuilder('app_database.db').build();
     _dao = database.todoDao;
-    _updateTodos();
+    _updatePosts();
   }
 
-  _updateTodos() {
-    _dao.getTodos().then((todos) {
+  _updatePosts() {
+    _dao.getPosts().then((posts) {
       setState(() {
-        _todos.clear();
-        _todos.addAll(todos);
+        _posts.clear();
+        _posts.addAll(posts);
       });
     });
   }
 
-  void _handleTodoChange(Todo todo) {
-    _textFieldController.text = todo.name;
-    _displayChangeDialog(todo);
+  void _handlePostChange(Post post) {
+    _textFieldController.text = post.name;
+    _displayChangeDialog(post);
   }
-  void updateTodo(Todo todo, String text){
-
-  }
-  void _handleTodoDelete(Todo todo) {
-    _dao.deleteTodo(todo);
-    deleteCommentsOfPost(todo.id!);
+  void _handlePostDelete(Post post) {
+    _dao.deletePost(post);
+    deleteCommentsOfPost(post.id!);
     setState(() {
-      _updateTodos();
+      _updatePosts();
     });
   }
 
@@ -103,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   return;
                 }
                 Navigator.of(context).pop();
-                _addTodoItem(value);
+                _addPostItem(value);
               },
           ),
           actions: <Widget>[
@@ -114,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   return;
                 }
                 Navigator.of(context).pop();
-                _addTodoItem(_textFieldController.text);
+                _addPostItem(_textFieldController.text);
               },
             ),
           ],
@@ -122,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
-  Future<void> _displayChangeDialog(Todo todo) async {
+  Future<void> _displayChangeDialog(Post post) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -136,11 +133,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 if(value.isEmpty){
                   return;
                 }
-                Todo tod = Todo(id: todo.id, name: value);
+                Post pos = Post(id: post.id, name: value);
                 Navigator.of(context).pop();
-                _dao.updateTodo(tod);
+                _dao.updatePost(pos);
                 _textFieldController.clear();
-                _updateTodos();
+                _updatePosts();
               },
           ),
           actions: <Widget>[
@@ -150,11 +147,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 if(_textFieldController.text.isEmpty){
                   return;
                 }
-                Todo tod = Todo(id: todo.id, name: _textFieldController.text);
+                Post pos = Post(id: post.id, name: _textFieldController.text);
                 Navigator.of(context).pop();
-                _dao.updateTodo(tod);
+                _dao.updatePost(pos);
                 _textFieldController.clear();
-                _updateTodos();
+                _updatePosts();
               },
             ),
           ],
@@ -163,19 +160,19 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _addTodoItem(String name) {
-    Todo todo = Todo(id: null, name: name, checked: false);
-    _dao.insertTodo(todo);
+  void _addPostItem(String name) {
+    Post post = Post(id: null, name: name);
+    _dao.insertPost(post);
     setState(() {
-      _updateTodos();
+      _updatePosts();
     });
     
     _textFieldController.clear();
   }
 
   void resetDatabase(){
-    _dao.getComments().then((value) => _dao.deleteComments(value).then((value){_updateTodos();}));
-    _dao.getTodos().then((value) => _dao.deleteTodos(value).then((value){_updateTodos();}));
+    _dao.getComments().then((value) => _dao.deleteComments(value).then((value){_updatePosts();}));
+    _dao.getPosts().then((value) => _dao.deletePosts(value).then((value){_updatePosts();}));
   }
 
   @override
@@ -191,13 +188,13 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            itemCount: _todos.length,
+            itemCount: _posts.length,
             itemBuilder: (context, index) {
               return TodoItem(
                 dao: _dao,
-                todo: _todos[index],
-                onTodoChanged: _handleTodoChange,
-                onTodoDelete: _handleTodoDelete,
+                post: _posts[index],
+                onTodoChanged: _handlePostChange,
+                onTodoDelete: _handlePostDelete,
               );
             }),
       ),

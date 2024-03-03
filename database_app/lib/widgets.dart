@@ -8,13 +8,13 @@ import 'database.dart';
 
 class TodoItem extends StatefulWidget {
   TodoItem({
-    required this.todo,
+    required this.post,
     required this.onTodoChanged,
     required this.onTodoDelete,
     required this.dao,
-  }) : super(key: ObjectKey(todo));
+  }) : super(key: ObjectKey(post));
 
-  final Todo todo;
+  final Post post;
   final Function onTodoChanged;
   final Function onTodoDelete;
   final TodoDao dao;
@@ -22,34 +22,25 @@ class TodoItem extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     // ignore: no_logic_in_create_state
-    return  TodoItemState(todo, onTodoChanged, onTodoDelete, dao);
+    return  TodoItemState(post, onTodoChanged, onTodoDelete, dao);
   }
 }
 
 class TodoItemState extends State<TodoItem>{
-  final Todo todo;
+  final Post post;
   final Function onTodoChanged;
   final Function onTodoDelete;
   final TodoDao dao;
   final TextEditingController _textFieldController = TextEditingController();
   List<Comment> realComments = [];
 
-  TodoItemState(this.todo,this.onTodoChanged,this.onTodoDelete, this.dao){
-    getComments(todo.id!);
+  TodoItemState(this.post,this.onTodoChanged,this.onTodoDelete, this.dao){
+    getComments(post.id!);
   }
   void getComments(int id) async {
     dao.getCommentsByPostId(id).then((value) {setState(() {
       realComments = value;
     });});
-  }
-
-  TextStyle? _getTextStyle(bool checked) {
-    if (!checked) return null;
-
-    return const TextStyle(
-      color: Colors.black45,
-      decoration: TextDecoration.lineThrough,
-    );
   }
 
   @override
@@ -74,8 +65,8 @@ class TodoItemState extends State<TodoItem>{
             //onTodoDelete(todo);
             _displayOptions();
           }),
-          leading: CircleAvatar(child: Text(todo.name[0])),
-          title: Text(todo.name, style: _getTextStyle(todo.checked)),
+          leading: CircleAvatar(child: Text(post.name[0])),
+          title: Text(post.name),
         ),
         ),
         SizedBox(
@@ -140,12 +131,12 @@ class TodoItemState extends State<TodoItem>{
                 SizedBox(
                   height: 40,
                   width: 300,
-                  child: TextButton(onPressed: (){Navigator.of(context).pop();onTodoChanged(todo);}, child: const Text("modify")),
+                  child: TextButton(onPressed: (){Navigator.of(context).pop();onTodoChanged(post);}, child: const Text("modify")),
                 ),
                 SizedBox(
                   height: 40,
                   width: 300,
-                  child: TextButton(onPressed: (){Navigator.of(context).pop();onTodoDelete(todo);}, child: const Text("delete")),
+                  child: TextButton(onPressed: (){Navigator.of(context).pop();onTodoDelete(post);}, child: const Text("delete")),
                 ),
               ],
             ),
@@ -155,9 +146,9 @@ class TodoItemState extends State<TodoItem>{
     );
   }
   void _addTodoComment(String name) {
-    print(todo.id);
-    Comment com = Comment(id: null, name: "-> $name", postid: todo.id!);
-    dao.insertComment(com).then((value){getComments(todo.id!);});
+    print(post.id);
+    Comment com = Comment(id: null, name: "-> $name", postid: post.id!);
+    dao.insertComment(com).then((value){getComments(post.id!);});
     
     _textFieldController.clear();
   }
