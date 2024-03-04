@@ -10,14 +10,16 @@ class Post {
   final String name;
 }
 
-@entity
+@Entity(tableName: "Comment", foreignKeys: [
+  ForeignKey(childColumns: ["postid"], parentColumns: ["id"], entity: Post, onDelete: ForeignKeyAction.cascade),
+])
 class Comment {
   Comment({required this.id, required this.name, required this.postid});
 
   @primaryKey
   final int? id;
 
-  @ForeignKey(childColumns: ["postid"], parentColumns: ["id"], entity: Post)
+  @ColumnInfo(name: "postid")
   final int postid;
 
   final String name;

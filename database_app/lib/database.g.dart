@@ -85,7 +85,7 @@ class _$AppDatabase extends AppDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Comment` (`id` INTEGER, `postid` INTEGER NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY (`id`))');
+            'CREATE TABLE IF NOT EXISTS `Comment` (`id` INTEGER, `postid` INTEGER NOT NULL, `name` TEXT NOT NULL, FOREIGN KEY (`postid`) REFERENCES `Post` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE, PRIMARY KEY (`id`))');
         await database.execute(
             'CREATE TABLE IF NOT EXISTS `Post` (`id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))');
 
