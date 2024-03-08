@@ -131,7 +131,7 @@ class Page2State extends State<Page2>{
         title: Row(
           children: [
             SizedBox(
-              width: 250,
+              width: 220,
               child: TextField(
                 controller: textcontroller,
                 onSubmitted: (value){fetchData(textcontroller.text);},
