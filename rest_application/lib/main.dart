@@ -75,10 +75,9 @@ class MyHomePageState extends State<MyHomePage>{
   }
   void goToPage2() async{
     try{
-      final response = await http.get(Uri.parse('http://${textcontroller.text}/Rest.php?codice='));
+      final response = await http.get(Uri.parse('http://${textcontroller.text}/Rest.php?codice=')).timeout(const Duration(seconds: 5));
     }catch(e){
       showError("impossibile raggiungere server");
-      print("errore");
       return;
     }
     Navigator.push(context, MaterialPageRoute(builder:(context) {return Page2(ipaddress: textcontroller.text); }));
@@ -195,8 +194,10 @@ class Page2State extends State<Page2>{
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         if (jsonResponse['stato'] == 'ERRORE') {
+          clearAll();
           showError("URL non valido");  
-        } else if (jsonResponse['stato'] == 'OK-2') {  
+        } else if (jsonResponse['stato'] == 'OK-2') { 
+          clearAll();
           showError("codice inesistente");
         } else {
           setState(() {
@@ -206,11 +207,19 @@ class Page2State extends State<Page2>{
           });
         }
       } else {
+        showError("impossibile caricare");
         throw Exception('Failed to load data');
       }
     }catch(e){
       print(e);
     }
+  }
+  void clearAll(){
+    setState(() {
+      nome = "";
+      cognome = "";
+      reparto = "";
+    });
   }
   void showError(String msg){
     ScaffoldMessenger.of(context).showSnackBar(
