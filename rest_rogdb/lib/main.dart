@@ -1,9 +1,11 @@
-// ignore_for_file: no_logic_in_create_state
+// ignore_for_file: no_logic_in_create_state, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:rest_rogdb/account.dart';
 import 'dart:convert';
 import 'connection.dart';
+import 'account.dart';
 
 void main() {
   runApp(const MyApp());
@@ -47,7 +49,7 @@ class MyHomePageState extends State<MyHomePage>{
   Widget build(BuildContext context) {
     
     return Scaffold(
-      appBar: AppBar(title: const Text("REST client"),backgroundColor: const Color.fromARGB(255, 217, 234, 236),),
+      appBar: AppBar(title: const Text("REST ROGdb"),backgroundColor: const Color.fromARGB(255, 217, 234, 236),),
       body: Center(
         child: SizedBox(
           width: 300,
@@ -82,7 +84,7 @@ class MyHomePageState extends State<MyHomePage>{
       print("errore");
       return;
     }
-    Navigator.push(context, MaterialPageRoute(builder:(context) {return Page2(ipaddress: textcontroller.text); }));
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return LoginPage(ipaddress: textcontroller.text); }));
   }
 
   void showError(String msg){
@@ -98,11 +100,8 @@ class MyHomePageState extends State<MyHomePage>{
 
 
 class Page2 extends StatefulWidget{
-
   final String ipaddress;
-
   const Page2({super.key, required this.ipaddress});
-
   @override
   State<StatefulWidget> createState() {
     return Page2State(ipaddress);
@@ -110,8 +109,6 @@ class Page2 extends StatefulWidget{
 }
 
 class Page2State extends State<Page2>{
-
-
   final String ipaddress;
   late Connection conn;
   Map<String,dynamic> utenti = {"response":0};
@@ -129,7 +126,16 @@ class Page2State extends State<Page2>{
     
   }
   void update(){
-    Future(()async {utenti = await conn.read(); setState(() {});});
+    Future(()async {
+      
+      String? mail = Account().getEmail();
+      if(mail == null){
+        showError("not Logged");
+        return;
+      }
+      utenti = await conn.readGamesOf(mail); 
+      setState(() {});
+    });
   }
   @override
   Widget build(BuildContext context) {
@@ -142,7 +148,7 @@ class Page2State extends State<Page2>{
               width: 220,
               child: TextField(
                 controller: textcontroller,
-                onSubmitted: (value){fetchData(textcontroller.text);},
+                onSubmitted: (value){update();},
                 decoration: const InputDecoration(
                   hintText: "code",
                   contentPadding: EdgeInsets.only(left: 30),
@@ -173,7 +179,12 @@ class Page2State extends State<Page2>{
                     color: Color.fromARGB(255, 217, 234, 236),
                     borderRadius: BorderRadius.all(Radius.circular(10))
                   ),
-                  child: Row(children: [ const Text("NOME: "), const SizedBox(width: 50,), Text(utenti["records"][index].name)],),
+                  child: Row(children: [ 
+                    //se x o null allora fai altro, e devo scoprire come dare le misure
+                    Image.network('http://$ipaddress/www.r0g.com/sources/${utenti["records"][index].mainImg}',height: 100,width: 100,),
+                    
+                    const SizedBox(width: 50,), 
+                    Text(utenti["records"][index].nome)],),
                 ),
                 const SizedBox(height: 20,)
               ],
@@ -195,29 +206,96 @@ class Page2State extends State<Page2>{
     return ris;
   }
 
-  Future<void> fetchData(String codice) async {
-    try{
-      final response = await http.get(Uri.parse('http://$ipaddress/Rest.php?codice=$codice'));
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['stato'] == 'ERRORE') {
-          showError("URL non valido");  
-        } else if (jsonResponse['stato'] == 'OK-2') {  
-          showError("codice inesistente");
-        } else {
-          setState(() {
-            nome = jsonResponse['nome'];
-            cognome = jsonResponse['cognome'];
-            reparto = jsonResponse['reparto'];
-          });
-        }
-      } else {
-        throw Exception('Failed to load data');
-      }
-    }catch(e){
-      print(e);
-    }
+  void showError(String msg){
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color.fromARGB(255, 200, 99, 92),
+        content: Text(msg),
+      )
+    );
   }
+}
+class LoginPage extends StatefulWidget{
+  final String ipaddress;
+  const LoginPage({super.key, required this.ipaddress});
+  @override
+  State<StatefulWidget> createState() {
+    return LoginPageState(ipaddress);
+  }
+}
+
+class LoginPageState extends State<LoginPage>{
+  final String ipaddress;
+  late Connection conn;
+  Map<String,dynamic> utenti = {"response":0};
+  String nome = "";
+  String cognome = "";
+  String reparto = "";
+  TextEditingController mailcontroller = TextEditingController();
+  TextEditingController passwordcontroller = TextEditingController();
+  TextStyle textStyle =const TextStyle(
+    height: 2,
+    fontSize: 18
+  );
+  LoginPageState(this.ipaddress){
+    conn = Connection(ipaddress);
+    
+  }
+  void login(){
+    Future(()async {
+      utenti = await conn.login( mailcontroller.text,passwordcontroller.text);
+      
+      if(utenti["response"] == 200){
+        
+        Account account = Account();
+        
+        account.setName( utenti["records"][0].name);
+        
+        account.setEmail( utenti["records"][0].mail);
+        account.setSede( utenti["records"][0].sede);
+        Navigator.push(context, MaterialPageRoute(builder: (context){return Page2(ipaddress: ipaddress);}));
+      }
+      
+      
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 217, 234, 236),
+        title: const Text("Login")
+      ),
+
+      body: Center(
+        child: Column(
+          children: [
+            TextField(
+              controller: mailcontroller,
+              decoration: const InputDecoration(
+                  hintText: "e_mail",
+                  contentPadding: EdgeInsets.only(left: 30),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
+                ),
+            ),
+            const SizedBox(height: 70,),
+            TextField(
+              controller: passwordcontroller,
+              decoration: const InputDecoration(
+                  hintText: "password",
+                  contentPadding: EdgeInsets.only(left: 30),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
+                ),
+            ),
+            const SizedBox(height: 70,),
+            TextButton(onPressed: login, child: const Text("login"))
+          ],
+        )
+        
+      ),
+    );
+  }
+
   void showError(String msg){
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
