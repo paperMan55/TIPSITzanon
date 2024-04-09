@@ -11,6 +11,7 @@ class Connection{
     Map<String,dynamic> jsonResponse = {};
     try{
       final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php?mail=$e_mail'));
+      
       if (response.statusCode == 200) {
         print("a");
         final editori = giochiFromJson(response.body);
@@ -26,6 +27,7 @@ class Connection{
     }
     return jsonResponse;
   }
+
   Future<Map<String,dynamic>> login(String mail, String password) async {
     Map<String,dynamic> jsonResponse = {};
     try{
