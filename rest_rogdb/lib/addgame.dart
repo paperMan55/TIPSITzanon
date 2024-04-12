@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:rest_rogdb/account.dart';
 import 'main.dart';
 import 'connection.dart';
-
+import 'dart:io';
+import 'package:http/http.dart' as http;
 
 class AddPage extends StatefulWidget{
   final String ipaddress;
@@ -20,8 +21,11 @@ class AddPageState extends State<AddPage>{
   String nome = "";
   String cognome = "";
   String reparto = "";
-  TextEditingController mailcontroller = TextEditingController();
-  TextEditingController passwordcontroller = TextEditingController();
+  TextEditingController controllerN = TextEditingController();
+  TextEditingController controllerDe = TextEditingController();
+  TextEditingController controllerPr = TextEditingController();
+  TextEditingController controllerD = TextEditingController();
+  TextEditingController controllerSc = TextEditingController();
   TextStyle textStyle =const TextStyle(
     height: 2,
     fontSize: 18
@@ -30,24 +34,7 @@ class AddPageState extends State<AddPage>{
     conn = Connection(ipaddress);
     
   }
-  void login(){
-    Future(()async {
-      utenti = await conn.login( mailcontroller.text,passwordcontroller.text);
-      
-      if(utenti["response"] == 200){
-        
-        Account account = Account();
-        
-        account.setName( utenti["records"][0].name);
-        
-        account.setEmail( utenti["records"][0].mail);
-        account.setSede( utenti["records"][0].sede);
-        Navigator.push(context, MaterialPageRoute(builder: (context){return Page2(ipaddress: ipaddress);}));
-      }
-      
-      
-    });
-  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +48,7 @@ class AddPageState extends State<AddPage>{
           padding: const EdgeInsets.all(20),
           children: [
             TextField(
-              controller: mailcontroller,
+              controller: controllerN,
               decoration: const InputDecoration(
                   hintText: "name",
                   contentPadding: EdgeInsets.only(left: 30),
@@ -70,7 +57,7 @@ class AddPageState extends State<AddPage>{
             ),
             const SizedBox(height: 30,),
             TextField(
-              controller: passwordcontroller,
+              controller: controllerDe,
               decoration: const InputDecoration(
                   hintText: "descrizione",
                   contentPadding: EdgeInsets.only(left: 30),
@@ -81,9 +68,12 @@ class AddPageState extends State<AddPage>{
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                
                 SizedBox(width: 150, child:TextField(
-                controller: passwordcontroller,
+                keyboardType: TextInputType.number,
+                controller: controllerPr,
                 decoration: const InputDecoration(
+                    
                     hintText: "prezzo",
                     contentPadding: EdgeInsets.only(left: 30),
                     border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
@@ -91,7 +81,8 @@ class AddPageState extends State<AddPage>{
                 ),),
                 const SizedBox(height: 30,),
                 SizedBox(width: 150, child: TextField(
-                  controller: passwordcontroller,
+                  keyboardType: TextInputType.number,
+                  controller: controllerSc,
                   decoration: const InputDecoration(
                       hintText: "sconto",
                       contentPadding: EdgeInsets.only(left: 30),
@@ -103,20 +94,47 @@ class AddPageState extends State<AddPage>{
             const SizedBox(height: 30,),
             
             TextField(
-              controller: passwordcontroller,
+              keyboardType: TextInputType.datetime,
+              controller: controllerD,
+              readOnly: true,
+              onTap: () {showDateaPicker();},
               decoration: const InputDecoration(
                   hintText: "data",
+                  
                   contentPadding: EdgeInsets.only(left: 30),
                   border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
                 ),
             ),
-            TextButton(onPressed: login, child: const Text("login"))
+            TextButton(onPressed: upload, child: const Text("login"))
           ],
         )
         
       ),
     );
   }
+
+  void upload() async{
+    String? mail = Account().getEmail();
+    if(mail == null){
+      showError("not logged");
+      return;
+    }
+    bool res = await Connection(ipaddress).uploadGame(controllerN.text, controllerDe.text, controllerPr.text, controllerSc.text, mail, "x", controllerD.text);
+    showError(res?"added":"not added");
+  }
+
+  void showDateaPicker() async{
+    DateTime? date = await showDatePicker(context: context,
+      initialDate: DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime.utc(DateTime.now().year+5)
+    );
+    if(date != null){
+      controllerD.text = date.toString().split(" ")[0];
+    }else if(controllerD.text == ""){
+      controllerD.text = DateTime.now().toString().split(" ")[0];
+    }
+    
+  }
+  
 
   void showError(String msg){
     ScaffoldMessenger.of(context).showSnackBar(

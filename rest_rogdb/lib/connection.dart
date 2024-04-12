@@ -28,6 +28,31 @@ class Connection{
     return jsonResponse;
   }
 
+  Future<bool> uploadGame(String nome, String descrizione, String prezzo, String sconto, String mail_editore, String main_img, String data_pubblicazione)async{
+    
+    try{
+      Map<String,String> data = {"nome":nome,
+        "descrizione":descrizione,
+        "prezzo":prezzo,
+        "sconto":sconto,
+        "mail_editore":mail_editore,
+        "main_img":main_img,
+        "data_pubblicazione":data_pubblicazione};
+      final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/createGame.php'),body: jsonEncode(data));
+      printYellow(response.body);
+      if (response.statusCode == 200) {
+        return true;
+      } else if(response.statusCode == 400){
+        return false;
+      }else{
+        return false;
+      }
+    }catch(e){
+      print(e);
+      return false;
+    }
+  }
+
   Future<Map<String,dynamic>> login(String mail, String password) async {
     Map<String,dynamic> jsonResponse = {};
     try{
@@ -46,6 +71,9 @@ class Connection{
       print(e);
     }
     return jsonResponse;
+  }
+  void printYellow(String msg){
+    print("\x1B[33m$msg\x1B[0m");
   }
 }
 

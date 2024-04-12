@@ -56,6 +56,8 @@ class MyHomePageState extends State<MyHomePage>{
         child: SizedBox(
           width: 300,
           child: TextField(
+            
+            autofillHints: const <String>["192.168.202.246"], 
             controller: textcontroller,
             onSubmitted: (value) {
               goToPage2();
