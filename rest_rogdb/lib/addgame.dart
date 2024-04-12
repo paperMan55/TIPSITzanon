@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:rest_rogdb/account.dart';
-import 'main.dart';
+
 import 'connection.dart';
-import 'dart:io';
-import 'package:http/http.dart' as http;
+
 
 class AddPage extends StatefulWidget{
-  final String ipaddress;
-  const AddPage({super.key, required this.ipaddress});
+  const AddPage({super.key, });
   @override
   State<StatefulWidget> createState() {
-    return AddPageState(ipaddress);
+    return AddPageState();
   }
 }
 
 class AddPageState extends State<AddPage>{
-  final String ipaddress;
   late Connection conn;
   Map<String,dynamic> utenti = {"response":0};
   String nome = "";
@@ -30,8 +27,8 @@ class AddPageState extends State<AddPage>{
     height: 2,
     fontSize: 18
   );
-  AddPageState(this.ipaddress){
-    conn = Connection(ipaddress);
+  AddPageState(){
+    conn = Connection();
     
   }
   
@@ -119,7 +116,8 @@ class AddPageState extends State<AddPage>{
       showError("not logged");
       return;
     }
-    bool res = await Connection(ipaddress).uploadGame(controllerN.text, controllerDe.text, controllerPr.text, controllerSc.text, mail, "x", controllerD.text);
+    printYellow(controllerPr.text);
+    bool res = await Connection().uploadGame(controllerN.text, controllerDe.text, controllerPr.text, controllerSc.text, mail, "x", controllerD.text);
     showError(res?"added":"not added");
   }
 
@@ -132,7 +130,13 @@ class AddPageState extends State<AddPage>{
     }else if(controllerD.text == ""){
       controllerD.text = DateTime.now().toString().split(" ")[0];
     }
-    
+  }
+  void printYellow(String msg){
+    String a = "";
+    for (var line in msg.split("\n")) {
+      a+="\x1B[33m$line\x1B[0m\n";
+    }
+    print(a);
   }
   
 

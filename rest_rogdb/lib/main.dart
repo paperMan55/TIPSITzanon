@@ -82,13 +82,14 @@ class MyHomePageState extends State<MyHomePage>{
   }
   void goToPage2() async{
     try{
-      final response = await http.get(Uri.parse('http://${textcontroller.text}/Rest.php?codice=')).timeout(const Duration(seconds: 3));
+      await http.get(Uri.parse('http://${textcontroller.text}/Rest.php')).timeout(const Duration(seconds: 3));
     }catch(e){
       showError("impossibile raggiungere server");
       print("errore");
       return;
     }
-    Navigator.push(context, MaterialPageRoute(builder:(context) {return LoginPage(ipaddress: textcontroller.text); }));
+    Connection.ipaddress = textcontroller.text;
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return Page2(); }));
   }
 
   void showError(String msg){
@@ -104,16 +105,14 @@ class MyHomePageState extends State<MyHomePage>{
 
 
 class Page2 extends StatefulWidget{
-  final String ipaddress;
-  const Page2({super.key, required this.ipaddress});
+  const Page2({super.key});
   @override
   State<StatefulWidget> createState() {
-    return Page2State(ipaddress);
+    return Page2State();
   }
 }
 
 class Page2State extends State<Page2>{
-  final String ipaddress;
   late Connection conn;
   Map<String,dynamic> utenti = {"response":0};
   String nome = "";
@@ -124,8 +123,8 @@ class Page2State extends State<Page2>{
     height: 2,
     fontSize: 18
   );
-  Page2State(this.ipaddress){
-    conn = Connection(ipaddress);
+  Page2State(){
+    conn = Connection();
     update();
     
   }
@@ -137,7 +136,7 @@ class Page2State extends State<Page2>{
         showError("not Logged");
         return;
       }
-      utenti = await conn.readGamesOf(mail); 
+      utenti = await conn.readGamesOf(mail, textcontroller.text); 
       setState(() {});
     });
   }
@@ -145,6 +144,7 @@ class Page2State extends State<Page2>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: const Color.fromARGB(255, 217, 234, 236),
         title: Row(
           children: [
@@ -165,8 +165,8 @@ class Page2State extends State<Page2>{
               icon: const Icon(Icons.search_sharp))
           ],
         ),
-      ),
-
+        actions: [IconButton(onPressed: goToLogin, icon: const Icon(Icons.account_circle_rounded))],
+      ), 
       body: Center(
         child: ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -185,7 +185,7 @@ class Page2State extends State<Page2>{
                   ),
                   child: Row(children: [ 
                     //se x o null allora fai altro, e devo scoprire come dare le misure
-                    Image.network('http://$ipaddress/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitWidth,),
+                    Image.network('http://${Connection.ipaddress}/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitWidth,),
                     
                     const SizedBox(width: 50,), 
                     Text(utenti["records"][index].nome)],),
@@ -203,9 +203,12 @@ class Page2State extends State<Page2>{
   void goToAddPage(){
     Navigator.push(context, MaterialPageRoute(
       builder:(context) {
-        return AddPage(ipaddress: ipaddress); 
+        return AddPage(); 
       })
     );
+  }
+  void goToLogin(){
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return LoginPage(); }));
   }
 
   String getImg(String s){

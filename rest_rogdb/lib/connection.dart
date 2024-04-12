@@ -3,15 +3,16 @@ import 'dart:convert';
 
 
 class Connection{
-  final String ipaddress;
+  static String ipaddress = "";
+  
 
-  Connection(this.ipaddress);
+  Connection();
 
-  Future<Map<String,dynamic>> readGamesOf(String e_mail) async {
+  Future<Map<String,dynamic>> readGamesOf(String e_mail, String searched) async {
     Map<String,dynamic> jsonResponse = {};
     try{
-      final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php?mail=$e_mail'));
-      
+      final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php?mail=$e_mail&&cercato=$searched'));
+      printYellow(response.body);
       if (response.statusCode == 200) {
         print("a");
         final editori = giochiFromJson(response.body);
@@ -39,6 +40,25 @@ class Connection{
         "main_img":main_img,
         "data_pubblicazione":data_pubblicazione};
       final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/createGame.php'),body: jsonEncode(data));
+      printYellow("${response.body} con ${response.statusCode}");
+      if (response.statusCode == 200) {
+        return true;
+      } else if(response.statusCode == 400){
+        return false;
+      }else{
+        return false;
+      }
+    }catch(e){
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> register(String email, String nome, String sede, String password) async {
+    
+    try{
+      Map<String,String> data = {"mail":email,"name":nome,"password":password,"sede":sede};
+      final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/createUtente.php'),body: jsonEncode(data));
       printYellow(response.body);
       if (response.statusCode == 200) {
         return true;
@@ -54,6 +74,7 @@ class Connection{
   }
 
   Future<Map<String,dynamic>> login(String mail, String password) async {
+    
     Map<String,dynamic> jsonResponse = {};
     try{
       Map<String,String> data = {"e_mail":mail,"password":password};
@@ -73,7 +94,11 @@ class Connection{
     return jsonResponse;
   }
   void printYellow(String msg){
-    print("\x1B[33m$msg\x1B[0m");
+    String a = "";
+    for (var line in msg.split("\n")) {
+      a+="\x1B[33m$line\x1B[0m\n";
+    }
+    print(a);
   }
 }
 

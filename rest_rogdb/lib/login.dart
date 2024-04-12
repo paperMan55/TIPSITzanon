@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:rest_rogdb/account.dart';
+import 'package:rest_rogdb/register.dart';
 import 'main.dart';
 import 'connection.dart';
 
 
 class LoginPage extends StatefulWidget{
-  final String ipaddress;
-  const LoginPage({super.key, required this.ipaddress});
+  const LoginPage({super.key});
   @override
   State<StatefulWidget> createState() {
-    return LoginPageState(ipaddress);
+    return LoginPageState();
   }
 }
 
 class LoginPageState extends State<LoginPage>{
-  final String ipaddress;
   late Connection conn;
   Map<String,dynamic> utenti = {"response":0};
   String nome = "";
@@ -26,8 +25,8 @@ class LoginPageState extends State<LoginPage>{
     height: 2,
     fontSize: 18
   );
-  LoginPageState(this.ipaddress){
-    conn = Connection(ipaddress);
+  LoginPageState(){
+    conn = Connection();
     
   }
   void login(){
@@ -37,12 +36,11 @@ class LoginPageState extends State<LoginPage>{
       if(utenti["response"] == 200){
         
         Account account = Account();
-        
         account.setName( utenti["records"][0].name);
-        
         account.setEmail( utenti["records"][0].mail);
         account.setSede( utenti["records"][0].sede);
-        Navigator.push(context, MaterialPageRoute(builder: (context){return Page2(ipaddress: ipaddress);}));
+        
+        Navigator.push(context, MaterialPageRoute(builder: (context){return Page2();}));
       }
       
       
@@ -70,7 +68,7 @@ class LoginPageState extends State<LoginPage>{
             const SizedBox(height: 70,),
             TextField(
               obscureText: true,
-              obscuringCharacter: '☺',
+              obscuringCharacter: '☻',
               controller: passwordcontroller,
               decoration: const InputDecoration(
                   hintText: "password",
@@ -79,12 +77,16 @@ class LoginPageState extends State<LoginPage>{
                 ),
             ),
             const SizedBox(height: 70,),
-            TextButton(onPressed: login, child: const Text("login"))
+            TextButton(onPressed: login, child: const Text("login")),
+            TextButton(onPressed: register, child: const Text("register"))
           ],
         )
         
       ),
     );
+  }
+  void register(){
+    Navigator.push(context, MaterialPageRoute(builder: (context){return RegisterPage();}));
   }
 
   void showError(String msg){
