@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:rest_rogdb/account.dart';
 
 import 'connection.dart';
@@ -13,11 +16,8 @@ class AddPage extends StatefulWidget{
 }
 
 class AddPageState extends State<AddPage>{
-  late Connection conn;
-  Map<String,dynamic> utenti = {"response":0};
-  String nome = "";
-  String cognome = "";
-  String reparto = "";
+  
+  
   TextEditingController controllerN = TextEditingController();
   TextEditingController controllerDe = TextEditingController();
   TextEditingController controllerPr = TextEditingController();
@@ -27,10 +27,7 @@ class AddPageState extends State<AddPage>{
     height: 2,
     fontSize: 18
   );
-  AddPageState(){
-    conn = Connection();
-    
-  }
+  File? image;
   
   @override
   Widget build(BuildContext context) {
@@ -102,12 +99,26 @@ class AddPageState extends State<AddPage>{
                   border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
                 ),
             ),
-            TextButton(onPressed: upload, child: const Text("login"))
+            const SizedBox(height: 30,),
+            uploadedImage(),
+            TextButton(onPressed: upload, child: const Text("Upload"))
           ],
         )
-        
       ),
     );
+  }
+
+  Widget uploadedImage(){
+    if(image != null){
+      return Row(
+        children: [
+          Image.file(image!,width: 100,fit: BoxFit.fitWidth,),
+          IconButton(onPressed: (){image = null; setState(() {});}, icon: const Icon(Icons.delete))
+        ],
+      );
+    }else{
+      return TextButton(onPressed: pickImage, child: const Text("image"));
+    }
   }
 
   void upload() async{
@@ -116,8 +127,10 @@ class AddPageState extends State<AddPage>{
       showError("not logged");
       return;
     }
-    printYellow(controllerPr.text);
-    bool res = await Connection().uploadGame(controllerN.text, controllerDe.text, controllerPr.text, controllerSc.text, mail, "x", controllerD.text);
+    if(image!=null){
+      Connection().uploadImg(File(image!.path));
+    }
+    bool res = await Connection().uploadGame(controllerN.text, controllerDe.text, controllerPr.text, controllerSc.text, mail, (image==null?"x":image!.path.split("/").last), controllerD.text);
     showError(res?"added":"not added");
   }
 
@@ -131,12 +144,11 @@ class AddPageState extends State<AddPage>{
       controllerD.text = DateTime.now().toString().split(" ")[0];
     }
   }
-  void printYellow(String msg){
-    String a = "";
-    for (var line in msg.split("\n")) {
-      a+="\x1B[33m$line\x1B[0m\n";
-    }
-    print(a);
+  Future pickImage() async{
+    final imageRaw = await ImagePicker().pickImage(source: ImageSource.gallery);
+    image = File(imageRaw!.path);
+    setState(() {});
+    //Connection().uploadImg(File(image!.path));
   }
   
 

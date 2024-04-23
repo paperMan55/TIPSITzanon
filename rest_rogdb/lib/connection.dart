@@ -1,3 +1,6 @@
+import 'package:dio/dio.dart';
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -12,6 +15,29 @@ class Connection{
     Map<String,dynamic> jsonResponse = {};
     try{
       final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php?mail=$e_mail&&cercato=$searched'));
+      printYellow("helloaaaaaaaa");
+      printYellow(response.body);
+      if (response.statusCode == 200) {
+        print("a");
+        final editori = giochiFromJson(response.body);
+        print("b");
+        jsonResponse["records"] = editori.records;
+      } else {
+        throw Exception('Failed to load data');
+
+      }
+      jsonResponse["response"] = response.statusCode;
+    }catch(e){
+      print(e);
+    }
+    return jsonResponse;
+  }
+
+  Future<Map<String,dynamic>> readGame(String id) async{
+    Map<String,dynamic> jsonResponse = {};
+    try{
+      final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php'));
+      printYellow("helloaaaaaaaa");
       printYellow(response.body);
       if (response.statusCode == 200) {
         print("a");
@@ -53,6 +79,25 @@ class Connection{
       return false;
     }
   }
+  Future<bool> deleteGame(int id)async{
+    
+    try{
+      Map<String,String> data = {
+        "id":"$id"};
+      final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/deleteGame.php'),body: jsonEncode(data));
+      printYellow("${response.body} con ${response.statusCode}");
+      if (response.statusCode == 200) {
+        return true;
+      } else if(response.statusCode == 503){
+        return false;
+      }else{
+        return false;
+      }
+    }catch(e){
+      print(e);
+      return false;
+    }
+  }
 
   Future<bool> register(String email, String nome, String sede, String password) async {
     
@@ -71,6 +116,31 @@ class Connection{
       print(e);
       return false;
     }
+  }
+
+  Future<bool> uploadImg(File img) async {
+    print("passaggio 2");
+    try{
+      /*
+      Map<String,File> data = {"inpFile":img};
+      print("passaggio 3");
+      final response = await http.post(Uri.parse('http://$ipaddress/www.R0G.com/phps/upload_img.php'),body: data);
+      print("passaggio 4");
+      printYellow(response.body);
+      */
+      Dio dio = Dio();
+      FormData formData = FormData.fromMap({
+        "inpFile": await MultipartFile.fromFile(img.path),
+      });
+      final response = await dio.post('http://$ipaddress/www.R0G.com/phps/upload_img.php', data: formData);
+      printYellow(response.data);
+      return true;
+    }catch(e){
+      printYellow(e.toString());
+      return false;
+    }
+
+    
   }
 
   Future<Map<String,dynamic>> login(String mail, String password) async {
@@ -93,13 +163,7 @@ class Connection{
     }
     return jsonResponse;
   }
-  void printYellow(String msg){
-    String a = "";
-    for (var line in msg.split("\n")) {
-      a+="\x1B[33m$line\x1B[0m\n";
-    }
-    print(a);
-  }
+  
 }
 
 EditoriList editoriListFromJson(String str) => EditoriList.fromJson(json.decode(str));
@@ -225,3 +289,10 @@ class Gioco {
         "data_pubblicazione": dataPubblicazione,
     };
 }
+void printYellow(String msg) 
+  {String a = "";
+    for (var line in msg.split("\n")) {
+      a+="\x1B[33m$line\x1B[0m\n";
+    }
+    print(a);
+  }

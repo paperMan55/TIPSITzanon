@@ -7,6 +7,7 @@ import 'package:rest_rogdb/account.dart';
 import 'connection.dart';
 import 'login.dart';
 import 'addgame.dart';
+import 'gamePage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -175,20 +176,26 @@ class Page2State extends State<Page2>{
             return Column(
               
               children: [
-                Container(
-                  height: 100,
-                  width: 350,
-                  padding:const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Color.fromARGB(255, 217, 234, 236),
-                    borderRadius: BorderRadius.all(Radius.circular(10))
+                GestureDetector(
+                  onTap: () {
+                    goToGame(utenti["records"][index].id,
+                    utenti["records"][index]);
+                  },
+                  child: Container(
+                    height: 100,
+                    width: 350,
+                    padding:const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(255, 217, 234, 236),
+                      borderRadius: BorderRadius.all(Radius.circular(10))
+                    ),
+                    child: Row(children: [ 
+                      //se x o null allora fai altro, e devo scoprire come dare le misure
+                      Image.network('http://${Connection.ipaddress}/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitWidth,),
+                      
+                      const SizedBox(width: 50,), 
+                      Text(utenti["records"][index].nome)],),
                   ),
-                  child: Row(children: [ 
-                    //se x o null allora fai altro, e devo scoprire come dare le misure
-                    Image.network('http://${Connection.ipaddress}/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitWidth,),
-                    
-                    const SizedBox(width: 50,), 
-                    Text(utenti["records"][index].nome)],),
                 ),
                 const SizedBox(height: 20,)
               ],
@@ -201,14 +208,13 @@ class Page2State extends State<Page2>{
   }
 
   void goToAddPage(){
-    Navigator.push(context, MaterialPageRoute(
-      builder:(context) {
-        return AddPage(); 
-      })
-    );
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return AddPage(); })).then((value) {update();});
   }
   void goToLogin(){
-    Navigator.push(context, MaterialPageRoute(builder:(context) {return LoginPage(); }));
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return LoginPage(); })).then((value) {update();});
+  }
+  void goToGame(int id, Gioco a){
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return GamePage(a); })).then((value) {update();});
   }
 
   String getImg(String s){
@@ -238,5 +244,4 @@ class Page2State extends State<Page2>{
     );
   }
 }
-
 
