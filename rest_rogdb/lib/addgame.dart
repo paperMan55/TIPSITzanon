@@ -52,10 +52,11 @@ class AddPageState extends State<AddPage>{
             const SizedBox(height: 30,),
             TextField(
               controller: controllerDe,
+              maxLines: 10,
               decoration: const InputDecoration(
                   hintText: "descrizione",
                   contentPadding: EdgeInsets.only(left: 30),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(20.0)),)
                 ),
             ),
             const SizedBox(height: 30,),
@@ -146,7 +147,10 @@ class AddPageState extends State<AddPage>{
   }
   Future pickImage() async{
     final imageRaw = await ImagePicker().pickImage(source: ImageSource.gallery);
-    image = File(imageRaw!.path);
+    if(imageRaw == null){
+      return;
+    }
+    image = File(imageRaw.path);
     setState(() {});
     //Connection().uploadImg(File(image!.path));
   }

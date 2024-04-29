@@ -16,11 +16,9 @@ class LoginPage extends StatefulWidget{
 class LoginPageState extends State<LoginPage>{
   late Connection conn;
   Map<String,dynamic> utenti = {"response":0};
-  String nome = "";
-  String cognome = "";
-  String reparto = "";
   TextEditingController mailcontroller = TextEditingController();
   TextEditingController passwordcontroller = TextEditingController();
+
   TextStyle textStyle =const TextStyle(
     height: 2,
     fontSize: 18
@@ -41,6 +39,10 @@ class LoginPageState extends State<LoginPage>{
         account.setSede( utenti["records"][0].sede);
         
         Navigator.push(context, MaterialPageRoute(builder: (context){return Page2();}));
+      }else if(utenti["response"] == 400){
+        showError("password sbagliata");
+      }else{
+        showError("account inesistente");
       }
       
       
@@ -51,21 +53,25 @@ class LoginPageState extends State<LoginPage>{
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 217, 234, 236),
-        title: const Text("Login")
+        title: const Text("LOGIN")
       ),
 
       body: Center(
-        child: Column(
+        child: ListView(
+          padding: const EdgeInsets.all(40),
           children: [
+            const Icon(Icons.person, size: 100,),
+            const SizedBox(height: 10,),
             TextField(
+              
               controller: mailcontroller,
               decoration: const InputDecoration(
                   hintText: "e_mail",
                   contentPadding: EdgeInsets.only(left: 30),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0)),)
                 ),
             ),
-            const SizedBox(height: 70,),
+            const SizedBox(height: 30,),
             TextField(
               obscureText: true,
               obscuringCharacter: '☻',
@@ -73,17 +79,27 @@ class LoginPageState extends State<LoginPage>{
               decoration: const InputDecoration(
                   hintText: "password",
                   contentPadding: EdgeInsets.only(left: 30),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0)),)
                 ),
             ),
             const SizedBox(height: 70,),
-            TextButton(onPressed: login, child: const Text("login")),
+            ElevatedButton(style: ButtonStyle(
+              foregroundColor: MaterialStateColor.resolveWith((states) =>const Color.fromARGB(255, 255, 255, 255)),
+              backgroundColor: MaterialStateColor.resolveWith((states) =>const Color.fromARGB(255, 0, 0, 0))), 
+                onPressed: login, child: const Text("login")
+            ),
+            TextButton(onPressed: logout, child: const Text("logout")),
             TextButton(onPressed: register, child: const Text("register"))
           ],
         )
         
       ),
     );
+  }
+  void logout(){
+    Account.e_mail = null;
+    Account.name = null;
+    Account.sede = null;
   }
   void register(){
     Navigator.push(context, MaterialPageRoute(builder: (context){return RegisterPage();}));

@@ -25,7 +25,10 @@ class MyApp extends StatelessWidget {
       showSemanticsDebugger: false,
       title: 'REST',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          background: const Color.fromARGB(255, 219, 219, 219), 
+          seedColor: const Color.fromARGB(255, 2, 2, 2),
+        ),
         useMaterial3: true,
       ),
       home:const  MyHomePage(title: 'REST test'),
@@ -38,49 +41,72 @@ class MyHomePage extends StatefulWidget {
   final String title;
   @override
   State<StatefulWidget> createState() {
-    return MyHomePageState(title: title);
+    return MyHomePageState(title);
   }
 }
 
 class MyHomePageState extends State<MyHomePage>{
-  MyHomePageState({required this.title});
+  bool secondFase = false;
+  double heightSize = 400;
+  MyHomePageState( this.title){
+    Future.delayed(const Duration(seconds: 3),
+    (){
+      setState(() {
+        heightSize = 200;
+        secondFase = true;
+      });
+    }
+    );
+  }
   final String title;
   TextEditingController textcontroller = TextEditingController();
-  
   
   @override
   Widget build(BuildContext context) {
     
     return Scaffold(
-      appBar: AppBar(title: const Text("REST ROGdb"),backgroundColor: const Color.fromARGB(255, 217, 234, 236),),
-      body: Center(
-        child: SizedBox(
-          width: 300,
-          child: TextField(
+      body: ListView(
+        children: [
+          const SizedBox(height: 70,),
+          AnimatedContainer(duration: const Duration(milliseconds: 1000),
+            height: heightSize,
+            width: 500,
+            curve: Curves.easeIn,
+            child: Image.asset("images/LogoAnim.gif", fit: BoxFit.fitHeight,),
             
-            autofillHints: const <String>["192.168.202.246"], 
-            controller: textcontroller,
-            onSubmitted: (value) {
-              goToPage2();
-            },
-            decoration: const InputDecoration(
-              hintText: "ip address",
-              contentPadding: EdgeInsets.only(left: 30),
-              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
-            ),),
-        ),
+          ),
+          const SizedBox(height: 70,),
+          Center(
+          child: SizedBox(
+            width: 300,
+            child: TextField(
+              controller: textcontroller,
+              onSubmitted: (value) {
+                goToPage2();
+              },
+              decoration: const InputDecoration(
+                hintText: "ip address",
+                contentPadding: EdgeInsets.only(left: 30),
+                //border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0)),)
+              ),),
+          ),
+        )
+          ],
       ),
       floatingActionButton: IconButton(
+        
         style: ButtonStyle(
-          iconColor: MaterialStateColor.resolveWith((states) =>Colors.white),
-          backgroundColor: MaterialStateColor.resolveWith((states) =>const Color.fromARGB(255, 217, 234, 236),)
+          
+          iconColor: MaterialStateColor.resolveWith((states) =>const Color.fromARGB(255, 0, 0, 0)),
+          
         ),
         onPressed: (){
           goToPage2();
         },
-        icon:const Icon(Icons.arrow_forward_ios_sharp)),
+        icon:const Icon(Icons.arrow_circle_right_outlined, size: 50,)),
     );
   }
+  
   void goToPage2() async{
     try{
       await http.get(Uri.parse('http://${textcontroller.text}/Rest.php')).timeout(const Duration(seconds: 3));
@@ -90,7 +116,7 @@ class MyHomePageState extends State<MyHomePage>{
       return;
     }
     Connection.ipaddress = textcontroller.text;
-    Navigator.push(context, MaterialPageRoute(builder:(context) {return Page2(); }));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) {return Page2(); })).then((value) {setState(() {});});
   }
 
   void showError(String msg){
@@ -134,7 +160,7 @@ class Page2State extends State<Page2>{
       
       String? mail = Account().getEmail();
       if(mail == null){
-        showError("not Logged");
+        setState(() {});
         return;
       }
       utenti = await conn.readGamesOf(mail, textcontroller.text); 
@@ -155,7 +181,7 @@ class Page2State extends State<Page2>{
                 controller: textcontroller,
                 onSubmitted: (value){update();},
                 decoration: const InputDecoration(
-                  hintText: "code",
+                  hintText: "search",
                   contentPadding: EdgeInsets.only(left: 30),
                   border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(100.0)),)
                 ),
@@ -168,43 +194,64 @@ class Page2State extends State<Page2>{
         ),
         actions: [IconButton(onPressed: goToLogin, icon: const Icon(Icons.account_circle_rounded))],
       ), 
-      body: Center(
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          itemCount: listLength(),
-          itemBuilder: (context, index) {
-            return Column(
-              
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    goToGame(utenti["records"][index].id,
-                    utenti["records"][index]);
-                  },
-                  child: Container(
-                    height: 100,
-                    width: 350,
-                    padding:const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      color: Color.fromARGB(255, 217, 234, 236),
-                      borderRadius: BorderRadius.all(Radius.circular(10))
-                    ),
-                    child: Row(children: [ 
-                      //se x o null allora fai altro, e devo scoprire come dare le misure
-                      Image.network('http://${Connection.ipaddress}/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitWidth,),
-                      
-                      const SizedBox(width: 50,), 
-                      Text(utenti["records"][index].nome)],),
-                  ),
-                ),
-                const SizedBox(height: 20,)
-              ],
-            );
-          })
-        
-      ),
+      body: (Account().getEmail() == null?notLogged():gameList()),
       floatingActionButton: IconButton( onPressed: goToAddPage, icon: const Icon(Icons.add)),
     );
+  }
+
+  Widget notLogged(){
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.person_off_outlined,size: 200,),
+          const Text("You need to"),
+          TextButton(onPressed: goToLogin, child: const Text("login")),
+        ],
+      ),
+    );
+  }
+
+  Widget gameList(){
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      itemCount: listLength(),
+      itemBuilder: (context, index) {
+        return Column(
+          
+          children: [
+            GestureDetector(
+              onTap: () {
+                goToGame(utenti["records"][index].id,
+                utenti["records"][index]);
+              },
+              child: SizedBox(
+                height: 100,
+                width: 350,
+                
+                //padding:const EdgeInsets.all(10),
+                /*decoration: const BoxDecoration(
+                  color: Color.fromARGB(255, 181, 181, 181),
+                  borderRadius: BorderRadius.all(Radius.circular(10))
+                ),*/
+                child: Card(
+                  
+                  shadowColor: Colors.black,
+                  child: Padding(padding: const  EdgeInsets.all(8), 
+                    child: Row(children: [ 
+                    
+                    Image.network('http://${Connection.ipaddress}/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitHeight,),
+                    
+                    const SizedBox(width: 50,), 
+                    Text('${utenti["records"][index].nome}\n${utenti["records"][index].prezzo}€')],),
+                    )
+                  )
+              ),
+            ),
+            const SizedBox(height: 20,)
+          ],
+        );
+      });
   }
 
   void goToAddPage(){
