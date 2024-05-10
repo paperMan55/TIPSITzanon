@@ -39,6 +39,7 @@ dependencies:
   dio: ^5.4.3+1
   http: ^1.1.0
   path: ^1.8.3
+  floor: ^1.4.2
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +50,8 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
+  floor_generator: ^1.4.2
+  build_runner: ^2.1.2
   flutter_lints: ^2.0.0
 
 # For information on the generic Dart part of this file, see the

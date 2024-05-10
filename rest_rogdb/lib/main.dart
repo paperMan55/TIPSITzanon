@@ -3,11 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rest_rogdb/account.dart';
+import 'package:rest_rogdb/model.dart';
 
 import 'connection.dart';
 import 'login.dart';
 import 'addgame.dart';
 import 'gamePage.dart';
+import 'dao.dart';
+import 'database.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,7 +51,17 @@ class MyHomePage extends StatefulWidget {
 class MyHomePageState extends State<MyHomePage>{
   bool secondFase = false;
   double heightSize = 400;
+  final String title;
+  bool remember = false;
+  List<Server> servers = [];
+  TextEditingController textcontroller = TextEditingController();
+
   MyHomePageState( this.title){
+    Future(() async{
+      TodoDao dao = await getDao();
+      servers = await dao.getServers();
+      setState(() {});
+    },);
     Future.delayed(const Duration(seconds: 3),
     (){
       setState(() {
@@ -58,13 +71,26 @@ class MyHomePageState extends State<MyHomePage>{
     }
     );
   }
-  final String title;
-  TextEditingController textcontroller = TextEditingController();
+  
   
   @override
   Widget build(BuildContext context) {
     
     return Scaffold(
+      appBar: AppBar(actions: [
+        DropdownButton(
+            hint: const Text("servers"),
+            icon: const Icon(Icons.link),
+            items: servers.map<DropdownMenuItem<Server>>((Server value) {
+            return DropdownMenuItem<Server>(
+              value: value,
+              child: Text(value.ipaddress),
+            );
+          }).toList(), 
+          onChanged: (value){
+            textcontroller.text = value!.ipaddress;
+          })
+      ]),
       body: ListView(
         children: [
           const SizedBox(height: 70,),
@@ -90,15 +116,20 @@ class MyHomePageState extends State<MyHomePage>{
                 //border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10.0)),)
               ),),
           ),
+        ),
+        
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [Checkbox(value: remember, onChanged: (value){setState(() {
+          remember = !remember;
+        });}),const Text("remember me")],
         )
-          ],
+        
+        ],
       ),
       floatingActionButton: IconButton(
-        
         style: ButtonStyle(
-          
           iconColor: MaterialStateColor.resolveWith((states) =>const Color.fromARGB(255, 0, 0, 0)),
-          
         ),
         onPressed: (){
           goToPage2();
@@ -106,7 +137,7 @@ class MyHomePageState extends State<MyHomePage>{
         icon:const Icon(Icons.arrow_circle_right_outlined, size: 50,)),
     );
   }
-  
+
   void goToPage2() async{
     try{
       await http.get(Uri.parse('http://${textcontroller.text}/Rest.php')).timeout(const Duration(seconds: 3));
@@ -116,7 +147,15 @@ class MyHomePageState extends State<MyHomePage>{
       return;
     }
     Connection.ipaddress = textcontroller.text;
-    Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) {return Page2(); })).then((value) {setState(() {});});
+    if(remember){
+      TodoDao dao = await getDao();
+      dao.insertServer(Server(ipaddress: textcontroller.text));
+    }
+    Navigator.pushReplacement(context, MaterialPageRoute(builder:(context) {return const Page2(); })).then((value) {setState(() {});});
+  }
+  Future<TodoDao> getDao() async {
+    AppDatabase database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+    return database.todoDao;
   }
 
   void showError(String msg){
@@ -141,20 +180,25 @@ class Page2 extends StatefulWidget{
 
 class Page2State extends State<Page2>{
   late Connection conn;
+  late TodoDao dao;
+
   Map<String,dynamic> utenti = {"response":0};
-  String nome = "";
-  String cognome = "";
-  String reparto = "";
   TextEditingController textcontroller = TextEditingController();
   TextStyle textStyle =const TextStyle(
     height: 2,
     fontSize: 18
   );
   Page2State(){
+    getDao();
     conn = Connection();
     update();
     
   }
+  Future<void> getDao() async {
+    AppDatabase database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+    dao = database.todoDao;
+  }
+
   void update(){
     Future(()async {
       
@@ -163,6 +207,7 @@ class Page2State extends State<Page2>{
         setState(() {});
         return;
       }
+      
       utenti = await conn.readGamesOf(mail, textcontroller.text); 
       setState(() {});
     });
@@ -195,8 +240,15 @@ class Page2State extends State<Page2>{
         actions: [IconButton(onPressed: goToLogin, icon: const Icon(Icons.account_circle_rounded))],
       ), 
       body: (Account().getEmail() == null?notLogged():gameList()),
-      floatingActionButton: IconButton( onPressed: goToAddPage, icon: const Icon(Icons.add)),
+      floatingActionButton: getAddButton(),
     );
+  }
+
+  Widget? getAddButton(){
+    if(Account().getEmail() != null){
+      return IconButton( onPressed: goToAddPage, icon: const Icon(Icons.add));
+    }
+    return null;
   }
 
   Widget notLogged(){
@@ -213,6 +265,7 @@ class Page2State extends State<Page2>{
   }
 
   Widget gameList(){
+    
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       itemCount: listLength(),
@@ -242,8 +295,15 @@ class Page2State extends State<Page2>{
                     
                     Image.network('http://${Connection.ipaddress}/www.r0g.com/sources/${getImg(utenti["records"][index].mainImg)}',height: 100,width: 100,fit: BoxFit.fitHeight,),
                     
-                    const SizedBox(width: 50,), 
-                    Text('${utenti["records"][index].nome}\n${utenti["records"][index].prezzo}€')],),
+                    const SizedBox(width: 20,),
+                    Column(
+                      children: [
+                        Text(getName(utenti["records"][index].nome),style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 15),),
+                        const SizedBox(height: 15,),
+                        Text('${utenti["records"][index].prezzo}€')
+                      ],
+                    ),
+                    ],),
                     )
                   )
               ),
@@ -253,12 +313,18 @@ class Page2State extends State<Page2>{
         );
       });
   }
+  String getName(String name){
+    if(name.length>22){
+      return "${name.substring(0,21)}...";
+    }
+    return name;
+  }
 
   void goToAddPage(){
-    Navigator.push(context, MaterialPageRoute(builder:(context) {return AddPage(); })).then((value) {update();});
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return const AddPage(); })).then((value) {update();});
   }
   void goToLogin(){
-    Navigator.push(context, MaterialPageRoute(builder:(context) {return LoginPage(); })).then((value) {update();});
+    Navigator.push(context, MaterialPageRoute(builder:(context) {return const LoginPage(); })).then((value) {update();});
   }
   void goToGame(int id, Gioco a){
     Navigator.push(context, MaterialPageRoute(builder:(context) {return GamePage(a); })).then((value) {update();});

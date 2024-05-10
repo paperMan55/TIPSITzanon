@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:dio/dio.dart';
 import 'dart:io';
 
@@ -10,7 +12,7 @@ class Connection{
   
 
   Connection();
-
+  
   Future<Map<String,dynamic>> readGamesOf(String e_mail, String searched) async {
     Map<String,dynamic> jsonResponse = {};
     try{
@@ -18,9 +20,8 @@ class Connection{
       printYellow("helloaaaaaaaa");
       printYellow(response.body);
       if (response.statusCode == 200) {
-        print("a");
         final editori = giochiFromJson(response.body);
-        print("b");
+
         jsonResponse["records"] = editori.records;
       } else {
         throw Exception('Failed to load data');
@@ -32,18 +33,15 @@ class Connection{
     }
     return jsonResponse;
   }
-
-  Future<Map<String,dynamic>> readGame(String id) async{
+  
+  Future<Map<String,dynamic>> readKeysOf(String game_id) async {
     Map<String,dynamic> jsonResponse = {};
     try{
-      final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php'));
-      printYellow("helloaaaaaaaa");
+      final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readKeyOf.php?game_id=$game_id'));
       printYellow(response.body);
       if (response.statusCode == 200) {
-        print("a");
-        final editori = giochiFromJson(response.body);
-        print("b");
-        jsonResponse["records"] = editori.records;
+        final keys = keysListFromJson(response.body);
+        jsonResponse["records"] = keys.records;
       } else {
         throw Exception('Failed to load data');
 
@@ -53,6 +51,44 @@ class Connection{
       print(e);
     }
     return jsonResponse;
+  }
+
+
+  Future<Map<String,dynamic>> readGame(String id) async{
+    Map<String,dynamic> jsonResponse = {};
+    try{
+      final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php'));
+      printYellow(response.body);
+      if (response.statusCode == 200) {
+        final editori = giochiFromJson(response.body);
+        jsonResponse["records"] = editori.records;
+      } else {
+        throw Exception('Failed to load data');
+      }
+      jsonResponse["response"] = response.statusCode;
+    }catch(e){
+      print(e);
+    }
+    return jsonResponse;
+  }
+  Future<bool> uploadKey(String game_id, String key)async{
+    
+    try{
+      Map<String,String> data = {"game_id":game_id,
+        "key":key};
+      final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/createKey.php'),body: jsonEncode(data));
+      printYellow("${response.body} con ${response.statusCode}");
+      if (response.statusCode == 200) {
+        return true;
+      } else if(response.statusCode == 400){
+        return false;
+      }else{
+        return false;
+      }
+    }catch(e){
+      print(e);
+      return false;
+    }
   }
 
   Future<bool> uploadGame(String nome, String descrizione, String prezzo, String sconto, String mail_editore, String main_img, String data_pubblicazione)async{
@@ -119,7 +155,6 @@ class Connection{
   }
 
   Future<bool> uploadImg(File img) async {
-    print("passaggio 2");
     try{
       /*
       Map<String,File> data = {"inpFile":img};
@@ -139,8 +174,6 @@ class Connection{
       printYellow(e.toString());
       return false;
     }
-
-    
   }
 
   Future<Map<String,dynamic>> login(String mail, String password) async {
@@ -296,3 +329,43 @@ void printYellow(String msg)
     }
     print(a);
   }
+
+KeysList keysListFromJson(String str) => KeysList.fromJson(json.decode(str));
+
+String keysListToJson(KeysList data) => json.encode(data.toJson());
+
+class KeysList {
+    List<Key>? records;
+
+    KeysList({
+        this.records,
+    });
+
+    factory KeysList.fromJson(Map<String, dynamic> json) => KeysList(
+        records: List<Key>.from(json["records"].map((x) => Key.fromJson(x))),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "records": List<dynamic>.from(records!.map((x) => x.toJson())),
+    };
+}
+
+class Key {
+    int? gameId;
+    String? key;
+
+    Key({
+        this.gameId,
+        this.key,
+    });
+
+    factory Key.fromJson(Map<String, dynamic> json) => Key(
+        gameId: json["game_id"],
+        key: json["key"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "game_id": gameId,
+        "key": key,
+    };
+}
