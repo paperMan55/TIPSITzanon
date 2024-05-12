@@ -17,8 +17,7 @@ class Connection{
     Map<String,dynamic> jsonResponse = {};
     try{
       final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php?mail=$e_mail&&cercato=$searched'));
-      printYellow("helloaaaaaaaa");
-      printYellow(response.body);
+      
       if (response.statusCode == 200) {
         final editori = giochiFromJson(response.body);
 
@@ -38,7 +37,6 @@ class Connection{
     Map<String,dynamic> jsonResponse = {};
     try{
       final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readKeyOf.php?game_id=$game_id'));
-      printYellow(response.body);
       if (response.statusCode == 200) {
         final keys = keysListFromJson(response.body);
         jsonResponse["records"] = keys.records;
@@ -58,7 +56,6 @@ class Connection{
     Map<String,dynamic> jsonResponse = {};
     try{
       final response = await http.get(Uri.parse('http://$ipaddress/ServerRest/readGamesOf.php'));
-      printYellow(response.body);
       if (response.statusCode == 200) {
         final editori = giochiFromJson(response.body);
         jsonResponse["records"] = editori.records;
@@ -77,10 +74,27 @@ class Connection{
       Map<String,String> data = {"game_id":game_id,
         "key":key};
       final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/createKey.php'),body: jsonEncode(data));
-      printYellow("${response.body} con ${response.statusCode}");
       if (response.statusCode == 200) {
         return true;
       } else if(response.statusCode == 400){
+        return false;
+      }else{
+        return false;
+      }
+    }catch(e){
+      print(e);
+      return false;
+    }
+  }
+  Future<bool> deleteKey(String key)async{
+    try{
+      Map<String,String> data = {
+        "key":key};
+      final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/deleteKey.php'),body: jsonEncode(data));
+      printYellow(response.body);
+      if (response.statusCode == 200) {
+        return true;
+      } else if(response.statusCode == 503){
         return false;
       }else{
         return false;
@@ -102,7 +116,6 @@ class Connection{
         "main_img":main_img,
         "data_pubblicazione":data_pubblicazione};
       final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/createGame.php'),body: jsonEncode(data));
-      printYellow("${response.body} con ${response.statusCode}");
       if (response.statusCode == 200) {
         return true;
       } else if(response.statusCode == 400){
@@ -115,13 +128,38 @@ class Connection{
       return false;
     }
   }
-  Future<bool> deleteGame(int id)async{
+
+  Future<bool> updateGame(String id, String nome, String descrizione, String prezzo, String sconto, String mail_editore, String main_img, String data_pubblicazione)async{
     
+    try{
+      Map<String,String> data = {
+        "id":id,
+        "nome":nome,
+        "descrizione":descrizione,
+        "prezzo":prezzo,
+        "sconto":sconto,
+        "mail_editore":mail_editore,
+        "main_img":main_img,
+        "data_pubblicazione":data_pubblicazione};
+      final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/updateGame.php'),body: jsonEncode(data));
+      if (response.statusCode == 200) {
+        return true;
+      } else if(response.statusCode == 400){
+        return false;
+      }else{
+        return false;
+      }
+    }catch(e){
+      print(e);
+      return false;
+    }
+  }
+
+  Future<bool> deleteGame(int id)async{
     try{
       Map<String,String> data = {
         "id":"$id"};
       final response = await http.post(Uri.parse('http://$ipaddress/ServerRest/deleteGame.php'),body: jsonEncode(data));
-      printYellow("${response.body} con ${response.statusCode}");
       if (response.statusCode == 200) {
         return true;
       } else if(response.statusCode == 503){
@@ -168,7 +206,6 @@ class Connection{
         "inpFile": await MultipartFile.fromFile(img.path),
       });
       final response = await dio.post('http://$ipaddress/www.R0G.com/phps/upload_img.php', data: formData);
-      printYellow(response.data);
       return true;
     }catch(e){
       printYellow(e.toString());
@@ -335,14 +372,14 @@ KeysList keysListFromJson(String str) => KeysList.fromJson(json.decode(str));
 String keysListToJson(KeysList data) => json.encode(data.toJson());
 
 class KeysList {
-    List<Key>? records;
+    List<GameKey>? records;
 
     KeysList({
         this.records,
     });
 
     factory KeysList.fromJson(Map<String, dynamic> json) => KeysList(
-        records: List<Key>.from(json["records"].map((x) => Key.fromJson(x))),
+        records: List<GameKey>.from(json["records"].map((x) => GameKey.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -350,16 +387,16 @@ class KeysList {
     };
 }
 
-class Key {
+class GameKey {
     int? gameId;
     String? key;
 
-    Key({
+    GameKey({
         this.gameId,
         this.key,
     });
 
-    factory Key.fromJson(Map<String, dynamic> json) => Key(
+    factory GameKey.fromJson(Map<String, dynamic> json) => GameKey(
         gameId: json["game_id"],
         key: json["key"],
     );

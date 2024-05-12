@@ -300,7 +300,8 @@ class Page2State extends State<Page2>{
                       children: [
                         Text(getName(utenti["records"][index].nome),style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 15),),
                         const SizedBox(height: 15,),
-                        Text('${utenti["records"][index].prezzo}€')
+                        getScontato(utenti["records"][index])
+                        
                       ],
                     ),
                     ],),
@@ -312,6 +313,18 @@ class Page2State extends State<Page2>{
           ],
         );
       });
+  }
+  Widget getScontato(Gioco game){
+    if(game.sconto!=0){
+      double scontato = game.prezzo! - (game.prezzo! * game.sconto! / 100);
+
+      return Row(children: [
+            Text('${game.prezzo}', style:  (game.sconto != 0?const TextStyle(decoration: TextDecoration.lineThrough):null),),
+            const SizedBox(width: 5,),
+            Text("$scontato€")
+          ],);
+    }
+    return Text('${game.prezzo}€');
   }
   String getName(String name){
     if(name.length>22){

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'connection.dart';
+import 'dao.dart';
+import 'database.dart';
 
 
 class GamePage extends StatefulWidget{
@@ -16,18 +18,41 @@ class GamePageState extends State<GamePage> with TickerProviderStateMixin {
   late Gioco game;
   TextEditingController scontoController = TextEditingController();
   TextEditingController keyController = TextEditingController();
+  List<GameKey> keys = [];
   late PageController _pageViewController;
   late TabController _tabController;
   int currentPageIndex = 0;
 
-  GamePageState(this.game);
+  GamePageState(this.game){
+    scontoController.text = "${game.sconto}";
+  }
+
+  Future<TodoDao> getDao() async {
+    AppDatabase database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+    return database.todoDao;
+  }
+
 
   void initState() {
     super.initState();
     _pageViewController = PageController();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() async{ 
+      if(_tabController.index == 2){
+        updateKeys();
+      }
+    });
+    
   }
-
+  void updateKeys() async{
+    Map<String,dynamic> tmp = await Connection().readKeysOf("${game.id}");
+        if(tmp["records"] != null){
+          keys = tmp["records"];
+        }else{
+          showError("no keys");
+        }
+        setState(() {});
+  }
   void dispose() {
     super.dispose();
     _pageViewController.dispose();
@@ -49,7 +74,8 @@ class GamePageState extends State<GamePage> with TickerProviderStateMixin {
               height: 500,
               child: gameInfo(),
             ),
-            gameTools()
+            gameTools(),
+            gameKeys()
           ],
         ),
         PageIndicator(tabController: _tabController, currentPageIndex: currentPageIndex, onUpdateCurrentPageIndex: _updateCurrentPageIndex),
@@ -58,14 +84,14 @@ class GamePageState extends State<GamePage> with TickerProviderStateMixin {
     );
   }
   void setSconto(){
-    
+    Connection().updateGame("${game.id}", game.nome!, game.descrizione!, "${game.prezzo}", scontoController.text, game.mailEditore!, game.mainImg!, game.dataPubblicazione!);
   }
   void addKey() async{
     bool a = await Connection().uploadKey("${game.id}", keyController.text);
     if(a){
-
+      
     }else{
-      showError("something went wrong...");
+      showError("something went wrong...\ntry changhing key");
     }
   }
 
@@ -164,7 +190,27 @@ class GamePageState extends State<GamePage> with TickerProviderStateMixin {
         ],
       );
   }
-   void _handlePageViewChanged(int currentPageIndex) {
+  Widget gameKeys(){
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      itemCount: keys.length,
+      itemBuilder: (context, index) {
+        return Card(
+          margin: const EdgeInsets.all(10),
+          child: Padding(padding: const EdgeInsets.all(10), 
+          child:Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+               Text(keys[index].key!),
+               IconButton(onPressed: (){ 
+                Connection().deleteKey(keys[index].key!).then((value) {updateKeys();});
+               }, icon: const Icon(Icons.delete))
+            ],
+          ),),
+        );
+      });
+  }
+  void _handlePageViewChanged(int currentPageIndex) {
     
     _tabController.index = currentPageIndex;
     setState(() {
@@ -173,6 +219,7 @@ class GamePageState extends State<GamePage> with TickerProviderStateMixin {
   }
 
   void _updateCurrentPageIndex(int index) {
+    printYellow("$index");
     _tabController.index = index;
     _pageViewController.animateToPage(
       index,
